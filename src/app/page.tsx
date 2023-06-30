@@ -1,16 +1,19 @@
 "use client"
 
-import { ChangeEventHandler, FormEventHandler, useEffect, useState } from "react";
+import { ChangeEventHandler, FormEventHandler, useEffect, useMemo, useState } from "react";
+import styles from './page.module.css'
 
 type FormEntry = {
   name: string | null
   reps: number | null
+  weight: number | null
 }
 
 type Entry = {
   date: Date
   name: string
   reps: number
+  weight: number
 }
 
 type Table = Entry[]
@@ -54,11 +57,13 @@ export default function Home() {
   function addEntry(formEntry: FormEntry) {
     if (formEntry.name == null) throw new Error("Name field is null")
     if (formEntry.reps == null) throw new Error("Reps field is null")
+    if (formEntry.weight == null) throw new Error("Weight field is null")
 
     const entry: Entry = {
       date: clock,
       name: formEntry.name,
       reps: formEntry.reps,
+      weight: formEntry.weight,
     }
 
     const newTable = [...table, entry]
@@ -68,7 +73,8 @@ export default function Home() {
   // form
   const [form, setForm] = useState<FormEntry>({
     name: table[table.length-1]?.name,
-    reps: table[table.length-1]?.reps
+    reps: table[table.length-1]?.reps,
+    weight: table[table.length-1]?.weight,
   })
 
   const handleInputChange: ChangeEventHandler<HTMLInputElement> = (evt) => {
@@ -85,7 +91,7 @@ export default function Home() {
   const handleFormSubmit: FormEventHandler<HTMLFormElement> = (evt) => {
     evt.preventDefault()
 
-    if (!form.name || !form.reps) throw new Error("Invalid input")
+    if (!form.name || !form.reps || !form.weight) throw new Error("Invalid input")
 
     addEntry(form)
   }
@@ -96,17 +102,75 @@ export default function Home() {
     setTable(t);
   }
 
+  const {activityDays, maximumActivityCountSingleDay} = useMemo(() => {
+    const activityDays = []
+    const now = clock
+    const weekCount = 20
+
+    let relativeWeeks = 1
+    let tableIdx = table.length-1
+    let maximumActivityCountSingleDay = 0
+    for (let i = 0; i < 7*weekCount + now.getDay()+1; i++) {
+      const d = new Date(now);
+      d.setMilliseconds(0);
+      d.setSeconds(0);
+      d.setMinutes(0);
+      d.setHours(0);
+      d.setDate(d.getDate() - i);
+      
+      let activityCount = 0;
+      while (tableIdx >= 0 && table[tableIdx]?.date > d) {
+        activityCount += 1;
+        tableIdx--;
+      }
+
+      if (activityCount > maximumActivityCountSingleDay) maximumActivityCountSingleDay = activityCount;
+
+      activityDays.push({
+        date: d,
+        row: d.getDay()+1,
+        col: weekCount+2-relativeWeeks,
+        count: activityCount
+      })
+      if (d.getDay() == 0) relativeWeeks++;
+    }
+    return {activityDays, maximumActivityCountSingleDay}
+  }, [])
+
+  function mod(num: number, mod: number) {
+    return (((num % mod) + mod) % mod)
+  }
+
   return <>
     <button onClick={() => setTable([])}>
       Delete all data
     </button>
-    <div>
+    <div className={styles.activityOverview}>
+      {
+        activityDays.map(d => {
+          return <div
+            key={`activityOverview-day-${d.date.toISOString()}`}
+            className={`${styles.activityOverviewDay}`}
+            style={{
+              gridRow: d.row,
+              gridColumn: d.col,
+              backgroundColor: d.count == 0
+                ? `hsl(90, 0%, 80%)`
+                : `hsl(123, ${Math.floor((d.count / maximumActivityCountSingleDay) * 100)}%, 40%)`
+            }}
+            title={`${d.count} Sets`}
+          ></div>
+        })
+      }
+    </div>
+    <div style={{display: "grid", gridAutoFlow: "column"}}>
       {
         table.map((entry, idx) => {
           return <div key={idx} style={{display: "grid", gridAutoFlow: "column"}}>
             <div>{entry.date.toISOString()}</div>
             <div>{entry.name}</div>
-            <div>{entry.reps}</div>
+            <div>{entry.reps}x</div>
+            <div>{entry.weight}kg</div>
             <button onClick={() => handleRemove(idx)}>
               Remove
             </button>
@@ -121,8 +185,11 @@ export default function Home() {
       <div>
         <input type="text" name="name" value={form.name ?? ""} onChange={handleInputChange} />
       </div>
-      <div >
+      <div>
         <input type="number" name="reps" value={form.reps ?? ""} onChange={handleInputChange} min={1}/>
+      </div>
+      <div>
+        <input type="number" name="weight" value={form.weight ?? ""} onChange={handleInputChange} min={1}/>
       </div>
       <button>Submit</button>
     </form>
