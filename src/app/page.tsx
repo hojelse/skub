@@ -201,8 +201,6 @@ export default function Home() {
         position: "fixed",
         width: "100vw",
         bottom: 0,
-        margin: 0,
-        overflow: "hidden"
       }}
     >
       <div>
