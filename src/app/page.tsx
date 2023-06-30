@@ -22,7 +22,6 @@ type Entry = {
 type Table = Entry[]
 
 export default function Home() {
-
   // clock of current time
   const [clock, setClock] = useState<Date>(new Date());
 
@@ -37,10 +36,13 @@ export default function Home() {
   const [table, setTable] = useState<Table>(getLocalStorageTable());
 
   useEffect(() => {
-    localStorage.setItem('table', JSON.stringify(table));
+    if (typeof window !== 'undefined')
+      localStorage.setItem('table', JSON.stringify(table));
   }, [table])
 
   function getLocalStorageTable(): Table {
+    if (typeof window === 'undefined') return [];
+  
     const blah = localStorage.getItem('table')
     if (blah == null) return [];
 
