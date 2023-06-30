@@ -35,10 +35,11 @@ export default function Home() {
   // local storage
   const [table, setTable] = useState<Table>(getLocalStorageTable());
 
-  useEffect(() => {
+  function setTableAndLocal(table: Table) {
+    setTable(table)
     if (typeof window !== 'undefined')
       localStorage.setItem('table', JSON.stringify(table));
-  }, [table])
+  }
 
   function getLocalStorageTable(): Table {
     if (typeof window === 'undefined') return [];
@@ -74,7 +75,7 @@ export default function Home() {
     }
 
     const newTable = [...table, entry]
-    setTable(newTable);
+    setTableAndLocal(newTable);
   }
 
   // form
@@ -90,7 +91,7 @@ export default function Home() {
 
     const newForm = {
       ...form,
-      [name]: (name === 'reps') ? Number(value) : value
+      [name]: (name === 'reps' || name === 'weight' || name === 'rpe') ? Number(value) : value
     }
 
     setForm(newForm)
@@ -107,7 +108,7 @@ export default function Home() {
   const handleRemove = (idx: number) => {
     const t = table
     t.splice(idx, 1);
-    setTable(t);
+    setTableAndLocal(t);
   }
 
   const {activityDays, maximumActivityCountSingleDay} = useMemo(() => {
@@ -150,7 +151,7 @@ export default function Home() {
   }
 
   return <>
-    <button onClick={() => setTable([])}>
+    <button onClick={() => setTableAndLocal([])}>
       Delete all data
     </button>
     <h2>Entries</h2>
