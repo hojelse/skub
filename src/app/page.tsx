@@ -2,11 +2,13 @@
 
 import { ChangeEventHandler, FormEventHandler, useEffect, useMemo, useState } from "react";
 import styles from './page.module.css'
+import './global.css'
 
 type FormEntry = {
   name: string | null
   reps: number | null
   weight: number | null
+  rpe: number | null
 }
 
 type Entry = {
@@ -14,6 +16,7 @@ type Entry = {
   name: string
   reps: number
   weight: number
+  rpe: number
 }
 
 type Table = Entry[]
@@ -58,12 +61,14 @@ export default function Home() {
     if (formEntry.name == null) throw new Error("Name field is null")
     if (formEntry.reps == null) throw new Error("Reps field is null")
     if (formEntry.weight == null) throw new Error("Weight field is null")
+    if (formEntry.rpe == null) throw new Error("RPE field is null")
 
     const entry: Entry = {
       date: clock,
       name: formEntry.name,
       reps: formEntry.reps,
       weight: formEntry.weight,
+      rpe: formEntry.rpe,
     }
 
     const newTable = [...table, entry]
@@ -75,6 +80,7 @@ export default function Home() {
     name: table[table.length-1]?.name,
     reps: table[table.length-1]?.reps,
     weight: table[table.length-1]?.weight,
+    rpe: table[table.length-1]?.rpe,
   })
 
   const handleInputChange: ChangeEventHandler<HTMLInputElement> = (evt) => {
@@ -145,6 +151,28 @@ export default function Home() {
     <button onClick={() => setTable([])}>
       Delete all data
     </button>
+    <h2>Entries</h2>
+    <div style={{display: "grid", gridAutoFlow: "column"}}>
+      {
+        table.map((entry, idx) => {
+          return <div key={idx} style={{display: "grid", gridAutoFlow: "column"}}>
+            <div>
+              {
+                entry.date.toLocaleDateString()
+              }
+            </div>
+            <div>{entry.name}</div>
+            <div>{entry.reps}x</div>
+            <div>{entry.weight}kg</div>
+            <div>{entry.weight}rpe</div>
+            <button onClick={() => handleRemove(idx)}>
+              Remove
+            </button>
+          </div>
+        })
+      }
+    </div>
+    <h2>Activity Overview</h2>
     <div className={styles.activityOverview}>
       {
         activityDays.map(d => {
@@ -163,33 +191,32 @@ export default function Home() {
         })
       }
     </div>
-    <div style={{display: "grid", gridAutoFlow: "column"}}>
-      {
-        table.map((entry, idx) => {
-          return <div key={idx} style={{display: "grid", gridAutoFlow: "column"}}>
-            <div>{entry.date.toISOString()}</div>
-            <div>{entry.name}</div>
-            <div>{entry.reps}x</div>
-            <div>{entry.weight}kg</div>
-            <button onClick={() => handleRemove(idx)}>
-              Remove
-            </button>
-          </div>
-        })
-      }
-    </div>
-    <form onSubmit={handleFormSubmit} style={{display: "grid", gridAutoFlow: "column"}}>
+    <form
+      onSubmit={handleFormSubmit}
+      style={{
+        display: "grid",
+        gridAutoFlow: "column",
+        position: "fixed",
+        width: "100vw",
+        bottom: 0,
+        margin: 0,
+        overflow: "hidden"
+      }}
+    >
       <div>
-        {clock.toISOString()}
+        {`${clock.toLocaleDateString()}`}
       </div>
       <div>
         <input type="text" name="name" value={form.name ?? ""} onChange={handleInputChange} />
       </div>
       <div>
-        <input type="number" name="reps" value={form.reps ?? ""} onChange={handleInputChange} min={1}/>
+        <input type="number" name="reps" value={form.reps ?? ""} onChange={handleInputChange} min={1}/>x
       </div>
       <div>
-        <input type="number" name="weight" value={form.weight ?? ""} onChange={handleInputChange} min={1}/>
+        <input type="number" name="weight" value={form.weight ?? ""} onChange={handleInputChange} min={1}/>kg
+      </div>
+      <div>
+        <input type="number" name="rpe" value={form.rpe ?? ""} onChange={handleInputChange} min={1} max={10}/>rpe
       </div>
       <button>Submit</button>
     </form>
