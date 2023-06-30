@@ -3,7 +3,6 @@
 import { ChangeEventHandler, FormEventHandler, useEffect, useState } from "react";
 
 type FormEntry = {
-  date: Date | null
   name: string | null
   reps: number | null
 }
@@ -13,12 +12,12 @@ type Entry = {
   name: string
   reps: number
 }
+
 type Table = Entry[]
 
 export default function Home() {
 
   // clock of current time
-
   const [clock, setClock] = useState<Date>(new Date());
 
   useEffect(() => {
@@ -26,39 +25,57 @@ export default function Home() {
     return function cleanup() {
       clearInterval(timerId);
     };
-  });
+  }, []);
 
   // local storage
-  
-  const [table, setTable] = useState<Table>([]);
+  const [table, setTable] = useState<Table>(getLocalStorageTable());
 
   useEffect(() => {
     localStorage.setItem('table', JSON.stringify(table));
-  }, [table]);
+  }, [table])
 
-  useEffect(() => {
-    const s = localStorage.getItem('table');
-    const table = s ? JSON.parse(s) : {};
-    if (s) {
-     setTable(table);
+  function getLocalStorageTable(): Table {
+    const blah = localStorage.getItem('table')
+    if (blah == null) return [];
+
+    const table: Table = JSON.parse(blah);
+
+    // revive dates
+    const newTable = table.map(entry => {
+      return {
+        ...entry,
+        date: new Date(entry.date)
+      }
+    })
+
+    return newTable
+  }
+
+  function addEntry(formEntry: FormEntry) {
+    if (formEntry.name == null) throw new Error("Name field is null")
+    if (formEntry.reps == null) throw new Error("Reps field is null")
+
+    const entry: Entry = {
+      date: clock,
+      name: formEntry.name,
+      reps: formEntry.reps,
     }
-  }, []);
 
-  function addEntry(entry: Entry) {
-    table.push(entry)
-    setTable(table);
+    const newTable = [...table, entry]
+    setTable(newTable);
   }
 
   // form
-
-  const [form, setForm] = useState<FormEntry>({ date: new Date(), name: null, reps: null })
+  const [form, setForm] = useState<FormEntry>({
+    name: table[table.length-1]?.name,
+    reps: table[table.length-1]?.reps
+  })
 
   const handleInputChange: ChangeEventHandler<HTMLInputElement> = (evt) => {
     const { name, value } = evt.currentTarget
 
     const newForm = {
       ...form,
-      date: clock,
       [name]: (name === 'reps') ? Number(value) : value
     }
 
@@ -68,27 +85,38 @@ export default function Home() {
   const handleFormSubmit: FormEventHandler<HTMLFormElement> = (evt) => {
     evt.preventDefault()
 
-    if (!form.date || !form.name || !form.reps) throw new Error("Invalid input")
+    if (!form.name || !form.reps) throw new Error("Invalid input")
 
-    addEntry(form as Entry)
+    addEntry(form)
+  }
+
+  const handleRemove = (idx: number) => {
+    const t = table
+    t.splice(idx, 1);
+    setTable(t);
   }
 
   return <>
+    <button onClick={() => setTable([])}>
+      Delete all data
+    </button>
     <div>
-        {
-          table.map(entry => {
-            return <div key={entry.date.toISOString()} style={{display: "grid", gridAutoFlow: "column"}}>
-              <div>{entry.date.toISOString()}</div>
-              <div>{entry.name}</div>
-              <div>{entry.reps}</div>
-              <button>Remove</button>
-            </div>
-          })
-        }
+      {
+        table.map((entry, idx) => {
+          return <div key={idx} style={{display: "grid", gridAutoFlow: "column"}}>
+            <div>{entry.date.toISOString()}</div>
+            <div>{entry.name}</div>
+            <div>{entry.reps}</div>
+            <button onClick={() => handleRemove(idx)}>
+              Remove
+            </button>
+          </div>
+        })
+      }
     </div>
     <form onSubmit={handleFormSubmit} style={{display: "grid", gridAutoFlow: "column"}}>
       <div>
-        {form.date?.toISOString()}
+        {clock.toISOString()}
       </div>
       <div>
         <input type="text" name="name" value={form.name ?? ""} onChange={handleInputChange} />
