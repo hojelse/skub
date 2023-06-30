@@ -154,7 +154,7 @@ export default function Home() {
       Delete all data
     </button>
     <h2>Entries</h2>
-    <div style={{display: "grid", gridAutoFlow: "column"}}>
+    <div style={{display: "grid", gridAutoFlow: "row"}}>
       {
         table.map((entry, idx) => {
           return <div key={idx} style={{display: "grid", gridAutoFlow: "column"}}>
