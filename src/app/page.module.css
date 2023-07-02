@@ -7,3 +7,29 @@
   gap: 0.3em;
   justify-content: center;
 }
+
+.activityOverviewDay {
+  border-radius: 2px;
+}
+
+.entriesContainer {
+  display: flex;
+  flex-direction: column;
+}
+
+.entry {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  flex-wrap: wrap;
+}
+
+.form {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  position: fixed;
+  width: 100vw;
+  bottom: 0;
+}

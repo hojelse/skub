@@ -91,7 +91,18 @@ export default function Home() {
 
     const newForm = {
       ...form,
-      [name]: (name === 'reps' || name === 'weight' || name === 'rpe') ? Number(value) : value
+      [name]: (name === 'reps' || name === 'weight') ? Number(value) : value
+    }
+
+    setForm(newForm)
+  }
+
+  const handleSelectChange: ChangeEventHandler<HTMLSelectElement> = (evt) => {
+    const { name, value } = evt.currentTarget
+
+    const newForm = {
+      ...form,
+      [name]: (name === 'rpe') ? Number(value) : value
     }
 
     setForm(newForm)
@@ -154,31 +165,14 @@ export default function Home() {
     <button onClick={() => setTableAndLocal([])}>
       Delete all data
     </button>
-    <h2>Entries</h2>
-    <div style={{display: "grid", gridAutoFlow: "row"}}>
-      {
-        table.map((entry, idx) => {
-          return <div key={idx} style={{display: "grid", gridAutoFlow: "column"}}>
-            <div>
-              {
-                entry.date.toLocaleDateString()
-              }
-            </div>
-            <div>{entry.name}</div>
-            <div>{entry.reps}x</div>
-            <div>{entry.weight}kg</div>
-            <div>{entry.weight}rpe</div>
-            <button onClick={() => handleRemove(idx)}>
-              Remove
-            </button>
-          </div>
-        })
-      }
-    </div>
-    <h2>Activity Overview</h2>
     <div className={styles.activityOverview}>
       {
         activityDays.map(d => {
+
+          const hue = 123
+          const saturation = 100
+          const lightness = 40 - Math.round((d.count / maximumActivityCountSingleDay) * 0.6)
+
           return <div
             key={`activityOverview-day-${d.date.toISOString()}`}
             className={`${styles.activityOverviewDay}`}
@@ -187,26 +181,46 @@ export default function Home() {
               gridColumn: d.col,
               backgroundColor: d.count == 0
                 ? `hsl(90, 0%, 80%)`
-                : `hsl(123, ${Math.floor((d.count / maximumActivityCountSingleDay) * 100)}%, 40%)`
+                : `hsl(${hue}, ${saturation}%, ${lightness}%)`
             }}
             title={`${d.count} Sets`}
           ></div>
         })
       }
     </div>
+    <div className={styles.entriesContainer}>
+      {
+        table.map((entry, idx, arr) => {
+          const newDate =
+            idx == 0 ||
+            idx >= 1 
+            && (entry.date.getDate() != arr[idx-1].date.getDate())
+
+          return <>
+            {
+              newDate
+              ? <div className={styles.entry}>
+                {entry.date.toDateString()}
+              </div>
+              : null
+            }
+            <div key={idx} className={styles.entry}>
+            <div>{entry.name}</div>
+            <div>{entry.reps}x</div>
+            <div>{entry.weight}kg</div>
+            <div>{entry.rpe}</div>
+            <button onClick={() => handleRemove(idx)}>
+              x
+            </button>
+          </div>
+          </>
+        })
+      }
+    </div>
     <form
       onSubmit={handleFormSubmit}
-      style={{
-        display: "grid",
-        gridAutoFlow: "column",
-        position: "fixed",
-        width: "100vw",
-        bottom: 0,
-      }}
+      className={styles.form}
     >
-      <div>
-        {`${clock.toLocaleDateString()}`}
-      </div>
       <div>
         <input type="text" name="name" value={form.name ?? ""} onChange={handleInputChange} />
       </div>
@@ -217,9 +231,21 @@ export default function Home() {
         <input type="number" name="weight" value={form.weight ?? ""} onChange={handleInputChange} min={1}/>kg
       </div>
       <div>
-        <input type="number" name="rpe" value={form.rpe ?? ""} onChange={handleInputChange} min={1} max={10}/>rpe
+        <select name="rpe" value={`${form.rpe}`} onChange={handleSelectChange}>
+          <option>1</option>
+          <option>2</option>
+          <option>3</option>
+          <option>4</option>
+          <option>5</option>
+          <option>6</option>
+          <option>7</option>
+          <option>8</option>
+          <option>9</option>
+          <option>10</option>
+        </select>
+        rpe
       </div>
-      <button>Submit</button>
+      <button>Add</button>
     </form>
   </>
 }
